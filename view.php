@@ -106,6 +106,8 @@ $PAGE->set_heading($course->fullname);
 
 echo $OUTPUT->header();
 
+echo self_completion_form($cm, $course);
+
 $stradobeconnects = get_string('modulenameplural', 'adobeconnect');
 $stradobeconnect  = get_string('modulename', 'adobeconnect');
 
