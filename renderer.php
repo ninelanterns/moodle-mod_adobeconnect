@@ -33,7 +33,7 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
      * @return string
      */
     public function display_meeting_detail ($meetingdetail, $cmid, $groupid = 0) {
-        global $CFG;
+        global $CFG, $USER;
 
         $target = new moodle_url('/mod/adobeconnect/view.php');
 
@@ -112,6 +112,26 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
 
         }
 
+        // Print meeting summary label and value
+        $param = array('class' => 'aconmeetinforow');
+        $html .= html_writer::start_tag('div', $param);
+
+        // Print meeting summary label
+        $param = array('class' => 'aconlabeltitle', 'id' => 'aconmeetsummarytitle');
+        $html .= html_writer::start_tag('div', $param);
+        $param = array('for' => 'lblmeetingsummarytitle');
+        $html .= html_writer::tag('label', get_string('meetingintro', 'adobeconnect'), $param);
+        $html .= html_writer::end_tag('div');
+
+        // Print meeting summary value
+        $param = array('class' => 'aconlabeltext', 'id' => 'aconmeetsummarytxt');
+        $html .= html_writer::start_tag('div', $param);
+        $param = array('for' => 'lblmeetingsummary');
+        $html .= html_writer::tag('label', format_module_intro('adobeconnect', $meetingdetail, $cmid), $param);
+        $html .= html_writer::end_tag('div');
+
+        $html .= html_writer::end_tag('div');
+
         // Print meeting start time label and value
         $param = array('class' => 'aconmeetinforow');
         $html .= html_writer::start_tag('div', $param);
@@ -152,26 +172,6 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
 
         $html .= html_writer::end_tag('div');
 
-        // Print meeting summary label and value
-        $param = array('class' => 'aconmeetinforow');
-        $html .= html_writer::start_tag('div', $param);
-
-        // Print meeting summary label
-        $param = array('class' => 'aconlabeltitle', 'id' => 'aconmeetsummarytitle');
-        $html .= html_writer::start_tag('div', $param);
-        $param = array('for' => 'lblmeetingsummarytitle');
-        $html .= html_writer::tag('label', get_string('meetingintro', 'adobeconnect'), $param);
-        $html .= html_writer::end_tag('div');
-
-        // Print meeting summary value
-        $param = array('class' => 'aconlabeltext', 'id' => 'aconmeetsummarytxt');
-        $html .= html_writer::start_tag('div', $param);
-        $param = array('for' => 'lblmeetingsummary');
-        $html .= html_writer::tag('label', format_module_intro('adobeconnect', $meetingdetail, $cmid), $param);
-        $html .= html_writer::end_tag('div');
-
-        $html .= html_writer::end_tag('div');
-
         // Print hidden elements
         $param = array('type' => 'hidden', 'name' => 'id', 'value' => $cmid);
         $html .= html_writer::empty_tag('input', $param);
@@ -184,31 +184,38 @@ class mod_adobeconnect_renderer extends plugin_renderer_base {
         $param = array('class' => 'aconbtnrow');
         $html .= html_writer::start_tag('div', $param);
 
-        $param = array('class' => 'aconbtnjoin');
-        $html .= html_writer::start_tag('div', $param);
+        if(is_siteadmin()){
+            $param = array('class' => 'aconbtnjoin');
+            $html .= html_writer::start_tag('div', $param);
 
-        $param = array('id' => $cmid, 'sesskey' => sesskey(), 'groupid' => $groupid);
-        $target = new moodle_url('/mod/adobeconnect/join.php', $param);
+            $param = array('id' => $cmid, 'sesskey' => sesskey(), 'groupid' => $groupid);
+            $target = new moodle_url('/mod/adobeconnect/join.php', $param);
 
-        $param = array('type'=>'button',
-                       'value'=>get_string('joinmeeting','adobeconnect'),
-                       'name'=>'btnname',
-                       'onclick' => 'window.open(\''.$target->out(false).'\', \'btnname\',
+            $param = array('type'=>'button',
+                'value'=>get_string('joinmeeting','adobeconnect'),
+                'name'=>'btnname',
+                'onclick' => 'window.open(\''.$target->out(false).'\', \'btnname\',
                                                  \'menubar=0,location=0,scrollbars=0,resizable=0,width=900,height=900\', 0);',
-                       );
+            );
 
 
-        $html .= html_writer::empty_tag('input', $param);
-        $html .= html_writer::end_tag('div');
+            $html .= html_writer::empty_tag('input', $param);
+            $html .= html_writer::end_tag('div');
+        }
 
-        $param = array('class' => 'aconbtnroles');
-        $html .= html_writer::start_tag('div', $param);
-        $param = array('type'=>'submit',
-                       'value'=>get_string('selectparticipants','adobeconnect'),
-                       'name'=>'participants',
-                       );
-        $html .= html_writer::empty_tag('input', $param);
-        $html .= html_writer::end_tag('div');
+        // Roles Assignment
+        $context = context_module::instance($cmid);
+        if(has_capability('moodle/role:assign', $context, $USER->id)){
+            $param = array('class' => 'aconbtnroles');
+            $html .= html_writer::start_tag('div', $param);
+            $param = array('type'=>'submit',
+                'value'=>get_string('selectparticipants','adobeconnect'),
+                'name'=>'participants',
+            );
+            $html .= html_writer::empty_tag('input', $param);
+            $html .= html_writer::end_tag('div');
+        }
+
 
         $html .= html_writer::end_tag('div');
 
